@@ -85,8 +85,8 @@ function roundedRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);c.closePa
 function drawPhoto(){
  if(!imgObj)return;
  // photo window is the white frame area shared by the supplied designs
- const x=210,y=655,w=405,h=445;
- ctx.save();roundedRect(ctx,x,y,w,h,32);ctx.clip();
+ const x=226,y=683,w=399,h=436;
+ ctx.save();roundedRect(ctx,x,y,w,h,26);ctx.clip();
  const z=+document.getElementById('zoom').value;
  const px=+document.getElementById('posX').value,py=+document.getElementById('posY').value;
  const scale=Math.max(w/imgObj.width,h/imgObj.height)*z;
@@ -102,13 +102,24 @@ function drawText(){
  ctx.restore();
 }
 function hideBForA(){
- // A-only: cover only the lower B badge area with the same warm panel tone,
- // leaving the original A medal, ribbons, photo frame and school footer intact.
- const g=ctx.createLinearGradient(700,1080,1054,1360);g.addColorStop(0,'rgba(252,248,239,.98)');g.addColorStop(1,'rgba(247,241,229,.99)');
- ctx.fillStyle=g;ctx.fillRect(700,1080,354,285);
- // restore the two information bars on top
- ctx.fillStyle='rgba(255,255,255,.97)';roundedRect(ctx,400,1128,530,78,25);ctx.fill();roundedRect(ctx,400,1222,530,78,25);ctx.fill();
- ctx.strokeStyle='#d8a31e';ctx.lineWidth=2;ctx.stroke();roundedRect(ctx,400,1222,530,78,25);ctx.stroke();
+ // A-only: cover the B badge with a soft panel tone, then borrow the long
+ // info-bar strip from the B template so the bars still end neatly.
+ const g=ctx.createLinearGradient(735,1085,1054,1365);g.addColorStop(0,'rgba(252,248,239,1)');g.addColorStop(1,'rgba(247,241,229,1)');
+ ctx.fillStyle=g;ctx.fillRect(735,1085,319,280);
+ const bsrc=loaded[templates.b];
+ if(bsrc)ctx.drawImage(bsrc,690,1152,206,196,690,1152,206,196);
+}
+const layouts={
+ first:{ex:487,sx:487,ey:1205,sy:1305,r:935},
+ a:{ex:450,sx:464,ey:1198,sy:1297,r:892},
+ b:{ex:450,sx:464,ey:1198,sy:1297,r:892}
+};
+function drawField(t,x,cy,right){
+ if(!t)return;
+ const maxW=right-x-28;let size=34;
+ ctx.save();ctx.fillStyle='#111';ctx.textAlign='left';ctx.textBaseline='middle';
+ do{ctx.font='700 '+size+'px Arial, sans-serif';size--}while(ctx.measureText(t).width>maxW&&size>14);
+ ctx.fillText(t,x,cy+2);ctx.restore();
 }
 function render(){
  const src=loaded[templates[mode]];
@@ -118,10 +129,7 @@ function render(){
  drawPhoto();
  // avoid writing on template's placeholder; put only user values
  const item=document.getElementById('item').value.trim(),name=document.getElementById('name').value.trim();
- ctx.save();ctx.font='700 31px Arial';ctx.fillStyle='#111';
- if(item)ctx.fillText(item,455,1180);
- if(name)ctx.fillText(name,455,1275);
- ctx.restore();
+ const L=layouts[mode];drawField(item,L.ex,L.ey,L.r);drawField(name,L.sx,L.sy,L.r);
 }
 document.getElementById('generate').onclick=render;
 document.getElementById('download').onclick=()=>{
