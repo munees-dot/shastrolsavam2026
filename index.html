@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shastra Mela 2026 — Photo Frame</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111}.app{max-width:1100px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:15px;margin-bottom:14px;box-shadow:0 6px 24px #0001}.top h1{margin:0 0 5px;font-size:25px}.sub{color:#666;font-size:13px}.templates{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.templates button,.actions button{min-height:48px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:15px;font-weight:700;cursor:pointer}.templates button.active{border:2px solid #d9a321;background:#fff7dc}.controls{display:grid;grid-template-columns:1fr 1fr;gap:14px}.fields input{width:100%;height:48px;border:1px solid #ddd;border-radius:12px;padding:0 13px;font-size:16px;margin-bottom:12px}.label{font-weight:700;font-size:13px;margin-bottom:7px;display:block}.hint{font-size:12px;color:#777;margin-top:7px}.crop{display:none;margin-top:12px}.crop.show{display:block}.crop label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}.crop input{width:100%}.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.actions .primary{background:#b5122d;color:#fff;border:0}.preview{text-align:center}.preview canvas{max-width:100%;height:auto;background:#fff;border-radius:12px;box-shadow:0 10px 35px #0002}.status{display:none;padding:10px;border-radius:10px;background:#fff0f0;color:#a00;margin-bottom:14px;font-size:13px}.status.show{display:block}@media(max-width:700px){.controls{grid-template-columns:1fr}.templates{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.app{padding:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="card top"><h1>🏆 Shastra Mela 2026 — Photo Frame</h1><div class="sub">Choose a frame → upload photo → crop → enter details → download/share</div></div>
+ <div id="status" class="status"></div>
+ <div class="card"><span class="label">Choose Frame</span><div class="templates">
+  <button class="active" data-mode="first">🥇 First Rank</button>
+  <button data-mode="a">🅰️ A Grade Only</button>
+  <button data-mode="b">🅱️ B Grade Only</button>
+ </div></div>
+ <div class="controls">
+  <div class="card">
+   <span class="label">Student Photo</span>
+   <input id="photo" type="file" accept="image/*">
+   <div id="crop" class="crop">
+    <label>Zoom</label><input id="zoom" type="range" min="1" max="3" step=".01" value="1">
+    <label>Horizontal Position</label><input id="posX" type="range" min="-180" max="180" value="0">
+    <label>Vertical Position</label><input id="posY" type="range" min="-180" max="180" value="0">
+   </div>
+   <div class="hint">On mobile, choose a photo and use the sliders to crop it.</div>
+  </div>
+  <div class="card fields">
+   <span class="label">Student Name</span><input id="name" placeholder="Enter student name">
+   <span class="label">Item Name</span><input id="item" placeholder="Enter item / event">
+  </div>
+ </div>
+ <div class="actions">
+  <button class="primary" id="generate">✨ Generate Poster</button><button id="download">⬇️ Download</button><button id="share">📲 Share</button>
+ </div>
+ <div class="card preview"><canvas id="canvas" width="1054" height="1492"></canvas></div>
+</div>
+<script>
+const W=1054,H=1492;
+const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const status=document.getElementById('status');
+const files={first:'./assets/first-rank.png',a:'./assets/a-grade.png',b:'./assets/b-grade.png'};
+const imgs={}; let mode='first',photo=null;
+function loadImage(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('Could not load '+src));im.src=src;});}
+async function loadAll(){
+ for(const [key,src] of Object.entries(files)){try{imgs[key]=await loadImage(src)}catch(e){console.error(e)}}
+ if(Object.keys(imgs).length===0){showStatus('Template images were not found. Make sure the assets folder is uploaded to the same GitHub Pages folder as index.html.');return}
+ render();
+}
+function showStatus(msg){status.textContent=msg;status.classList.add('show')}
+function hideStatus(){status.classList.remove('show')}
+function rounded(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);c.closePath()}
+function drawPhoto(){if(!photo)return;const x=210,y=655,w=405,h=445;ctx.save();rounded(ctx,x,y,w,h,30);ctx.clip();const z=+zoom.value,px=+posX.value,py=+posY.value;const s=Math.max(w/photo.width,h/photo.height)*z;const dw=photo.width*s,dh=photo.height*s;ctx.drawImage(photo,x+(w-dw)/2+px,y+(h-dh)/2+py,dw,dh);ctx.restore()}
+function fitText(text,max=430){let s=text;while(s.length>0){ctx.font='700 31px Arial';if(ctx.measureText(s).width<=max)return s;s=s.slice(0,-1)}return ''}
+function drawText(){ctx.save();ctx.fillStyle='#111';ctx.font='700 31px Arial';const item=fitText(itemEl.value.trim()),name=fitText(nameEl.value.trim());if(item)ctx.fillText(item,455,1180);if(name)ctx.fillText(name,455,1275);ctx.restore()}
+function render(){const im=imgs[mode];if(!im)return;hideStatus();ctx.clearRect(0,0,W,H);ctx.drawImage(im,0,0,W,H);drawPhoto();drawText()}
+const zoom=document.getElementById('zoom'),posX=document.getElementById('posX'),posY=document.getElementById('posY'),nameEl=document.getElementById('name'),itemEl=document.getElementById('item');
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));render()});
+document.getElementById('photo').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{photo=im;document.getElementById('crop').classList.add('show');render()};im.onerror=()=>showStatus('This photo could not be read. Please choose another image.');im.src=r.result};r.readAsDataURL(f)};
+[zoom,posX,posY,nameEl,itemEl].forEach(el=>el.addEventListener('input',render));
+document.getElementById('generate').onclick=render;
+document.getElementById('download').onclick=()=>{render();const a=document.createElement('a');a.download='shastra-mela-2026.png';a.href=canvas.toDataURL('image/png');a.click()};
+document.getElementById('share').onclick=()=>{render();canvas.toBlob(async blob=>{const file=new File([blob],'shastra-mela-2026.png',{type:'image/png'});try{if(navigator.canShare?.({files:[file]})){await navigator.share({title:'Shastra Mela 2026',files:[file]})}else{showStatus('Sharing is not supported in this browser. Please use Download.')}}catch(e){if(e.name!=='AbortError')showStatus('Share was not completed. Please use Download.')}},'image/png')};
+loadAll();
+</script>
+</body></html>
